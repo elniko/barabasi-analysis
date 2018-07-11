@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.4/fetch.min.js"></script>
+</head>
+<body>
+
+<input type="text" value="" id="cookie">
+
+<button onClick="start()">OK</button>
+
+
+
+
+</body>
+</html>
+<script>
+
+    function start() {
+        var text = document.getElementById('cookie');
+        var url = "/cited?cookie="+ text.value;
+
+        fetch(url)
+            .then(function(resp) {
+
+            })
+            .catch(function(err){
+                alert("Blocked!!!!!!!")
+            });
+    }
+
+
+
+</script>

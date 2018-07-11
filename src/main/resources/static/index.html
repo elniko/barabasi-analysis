@@ -1,0 +1,181 @@
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.4/fetch.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+    <style>
+        .node {
+            stroke: #fff;
+            stroke-width: 1.5px;
+            cursor: pointer;
+        }
+
+        .link {
+            stroke: #999;
+            stroke-opacity: .6;
+        }
+
+        div.tooltip {
+            position: absolute;
+            text-align: center;
+
+            padding: 2px;
+            font: 12px sans-serif;
+            background: lightsteelblue;
+            border: 0px;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+        a{
+            margin:5px;
+            padding:0;
+            font-size: 16px;
+        }
+
+
+        h2{
+            float:left;
+            text-transform: uppercase;
+            margin:0;
+            padding: 10px 0;
+        }
+
+        #link {
+            float:right;
+            pading-right:30px;
+            text-transform: uppercase;
+            padding: 10px 0;
+            display:block;
+        }
+
+    </style>
+</head>
+<body>
+<h2>Publications by subject</h2>
+<span id="link">
+    <a href="chain.html">Go To Time Representation</a>
+</span>
+</body>
+
+<script>
+
+    const url = "/publications"
+    //const url = "/history"
+
+
+
+    var width = window.innerWidth;
+        height = window.innerHeight;
+
+    //var color = d3.scale.category20b();
+
+    function color(n) {
+        var colores_g = ["111","#3366cc", "#dc3912", "#ff9900", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6", "#3b3eac"];
+        return colores_g[n % colores_g.length];
+    }
+
+    var force = d3.layout.force()
+        .charge(-120)
+        .linkDistance(200)
+        .size([width, height]);
+
+    var svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    var div = d3.select("body").append("div")
+        .attr("class", "tooltip")
+        .style("opacity", 0);
+
+    function getPercentage(cited){
+        var max = 31444;
+        var res = Math.round(cited * 60 / max);
+        if(res<3) return 3;
+        return res;
+    }
+
+
+    function update(graph) {
+
+
+
+        force
+            .nodes(graph.first)
+            .links(graph.second)
+            .start();
+
+        var link = svg.selectAll(".link")
+            .data(graph.second)
+            .enter()
+            .append("line")
+            .attr("class", "link")
+            .style("stroke", function(d) {
+
+                return color(d.group);
+            })
+           .style("stroke-width", function(d) {
+                return 2;
+            });
+
+
+
+
+        var node = svg.selectAll(".node")
+            .data(graph.first)
+            .enter().append("circle")
+            .attr("class", "node")
+            .attr("r", function(d){
+                if(d.subject === null)
+                    return 7;
+                return getPercentage(d.cited);
+            })
+            .style("fill", function(d) {
+                return color(d.group);
+            })
+            .on("mouseover", function(d) {
+                div.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                div	.html(d.name + " <b>" + d.year +"</b><br/> " + " cited:" +d.cited)
+                    .style("left", (d3.event.pageX) + "px")
+                    .style("top", (d3.event.pageY - 28) + "px");
+            })
+            .on("mouseout", function(d) {
+                div.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            })
+            .call(force.drag);
+
+
+
+        force.on("tick", function() {
+            link.attr("x1", function(d) {
+                return d.source.x;
+            })
+                .attr("y1", function(d) {
+                    return d.source.y;
+                })
+                .attr("x2", function(d) {
+                    return d.target.x;
+                })
+                .attr("y2", function(d) {
+                    return d.target.y;
+                });
+
+            node.attr("cx", function(d) {
+                return d.x;
+            })
+                .attr("cy", function(d) {
+                    return d.y;
+                });
+        });
+    }
+
+
+
+    fetch(url)
+        .then(function(resp) { return resp.json()})
+        .then(function(data) {
+            update(data);
+    });
+
+</script>
